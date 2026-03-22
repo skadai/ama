@@ -171,24 +171,25 @@ Examples of good behavior:
 
 ## Common question patterns
 
-- “X 怎么看 Y？”
-  - if the source has first-person essays or newsletters, check those first
-  - then use interviews or podcasts to deepen or contrast the view
+- "How does X view Y?"
+  - If the source has first-person essays or newsletters, check these first
+  - Then use interviews or podcasts to deepen or contrast the view
 
-- “谁谈过 Y？”
-  - search broadly across close phrasings
-  - collect multiple relevant guests or articles, then synthesize
+- "Who has discussed Y?"
+  - Search broadly using closely related phrasings
+  - Gather multiple relevant guests or articles, then synthesize
 
-- “某嘉宾说了什么？”
-  - search the guest name directly
-  - open the transcript before answering
+- "What did guest X say?"
+  - Search directly for the guest name
+  - Open the transcript before drafting the answer
 
-- “哪一天聊过 Y？”
-  - search for the topic, then use the result metadata and original document to confirm the date
+- "On which day did they talk about Y?"
+  - Search for the topic, then use the result metadata and the original document to confirm the date
 
-- “关于 Y 最好的建议是什么？”
-  - search across both interviews and written pieces when available
-  - synthesize repeated themes and call out the strongest source-backed recommendation
+- "What is the best advice about Y?"
+  - Search across both interviews and written pieces when available
+  - Synthesize recurring themes and highlight the strongest, source-backed recommendations
+
 
 ## Save standout answers
 
