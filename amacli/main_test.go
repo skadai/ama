@@ -577,6 +577,63 @@ func TestSourceSetDefaultValidatesAndWritesConfig(t *testing.T) {
 	}
 }
 
+func TestLanguageSetWritesConfig(t *testing.T) {
+	t.Parallel()
+
+	configPath := filepath.Join(t.TempDir(), "config.json")
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	err := run(
+		context.Background(),
+		[]string{"--config", configPath, "language", "set", "zh"},
+		stdout,
+		stderr,
+		func(string) string { return "" },
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	cfg, err := readLocalConfig(configPath)
+	if err != nil {
+		t.Fatalf("readLocalConfig returned error: %v", err)
+	}
+	if cfg.PreferredLanguage != "zh" {
+		t.Fatalf("unexpected preferred language: %+v", cfg)
+	}
+	if !strings.Contains(stdout.String(), `Saved preferred language "zh"`) {
+		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+}
+
+func TestLanguageShowReturnsStoredValue(t *testing.T) {
+	t.Parallel()
+
+	configPath := filepath.Join(t.TempDir(), "config.json")
+	if err := writeLocalConfig(configPath, localConfig{PreferredLanguage: "en"}); err != nil {
+		t.Fatalf("writeLocalConfig returned error: %v", err)
+	}
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	err := run(
+		context.Background(),
+		[]string{"--config", configPath, "language", "show"},
+		stdout,
+		stderr,
+		func(string) string { return "" },
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	if !strings.Contains(stdout.String(), `"preferred_language": "en"`) {
+		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+}
+
 func TestNewAmaClientUsesDefaultTimeout(t *testing.T) {
 	t.Parallel()
 

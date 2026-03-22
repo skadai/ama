@@ -1,0 +1,207 @@
+---
+name: ama
+description: Search and answer questions over Ask Me Anything knowledge sources through `amacli`. Use when the user asks what a supported source said about a topic, wants evidence-backed summaries from podcast/newsletter/video content, needs original markdown inspection for top search hits, or needs installation and onboarding help for `amacli`, `skill.md`, browser login, source selection, and language preference. The current public source may be `lenny`, but this skill stays source-agnostic.
+---
+
+# Ama
+
+Use `amacli` to search the Ask Me Anything knowledge layer, inspect original markdown, and answer in a way that reflects what the source actually said — with evidence.
+
+Current public source availability may be narrow, but the skill name stays generic on purpose. Treat source choice as configuration, not as the skill identity.
+
+## Quick start
+
+1. For first-time install or onboarding, read `references/INSTALL.md`.
+2. Before answering in a fresh session, check:
+   - `amacli health`
+   - `amacli auth status`
+   - `amacli me`
+   - `amacli language show`
+   - `amacli source list`
+3. Prefer the saved `preferred_language` for answer language.
+4. Prefer the saved `default_source` unless the user explicitly asks for another source.
+5. Start with one focused `amacli search`, then open the strongest originals with `amacli document`.
+
+## How the knowledge layer works
+
+The workflow has two levels:
+
+- `amacli search` gives you the shortlist: titles, summaries, snippets, dates, guests, and document pointers.
+- `amacli document` gives you the original markdown, which is the authoritative layer for nuanced answers.
+
+Do not stop at search summaries when the user is asking a substantive question. Use search to find the right sources, then read the original markdown before making strong claims.
+
+## Answering workflow
+
+### Step 1: Honor language and source defaults
+
+Run:
+
+```bash
+amacli language show
+amacli source list
+```
+
+Rules:
+- if `preferred_language` is `zh`, answer in Chinese unless the user clearly asks otherwise
+- if `preferred_language` is `en`, answer in English unless the user clearly asks otherwise
+- if no language preference is saved, mirror the user's current language
+- use the saved default source when the user does not specify one
+- if the current public source is only `lenny`, that is fine; do not rename the skill because of one source
+
+### Step 2: Search for relevant content
+
+Start with the user's exact wording first.
+
+```bash
+amacli search --query "How does this source think about MVP scope?" --top-k 5
+```
+
+If the first pass is weak, expand into 3-6 nearby phrasings. Keep the expansions tight.
+
+Examples:
+- `mvp scope`
+- `minimum viable product`
+- `product validation`
+- `prototype before scaling`
+
+When the user asks about a specific guest or person:
+- search their name directly
+- inspect titles, guests, and summaries in the results
+
+When the user asks about a topic:
+- search broadly across close phrasings
+- prefer 3-5 strong candidates over a wide noisy list
+
+When the question clearly points to one format, narrow by content type:
+
+```bash
+amacli search --query "MVP scope" --content-type podcast_episode --top-k 5
+amacli search --query "MVP scope" --content-type newsletter_article --top-k 5
+```
+
+### Step 3: Read the original sources carefully
+
+Once you identify the strongest 1-3 candidates, fetch the original markdown.
+
+```bash
+amacli document --source lenny --id 42
+```
+
+Shorthand:
+
+```bash
+amacli doc lenny 42
+```
+
+This is critical. The search result is just the pointer. The real evidence is in the original document.
+
+For podcast transcripts, pay attention to:
+- the guest's actual words and argument structure
+- concrete examples, stories, and data points
+- the back-and-forth between host and guest
+- timestamps, links, or transcript markers when present
+
+For newsletters and articles, pay attention to:
+- the author's own frameworks and opinions
+- examples, data, and case studies
+- actionable advice and decision rules
+
+Preferred reading order:
+1. read the top result in full if it is short enough
+2. read the most relevant sections first if it is long
+3. open 1-2 additional sources when the topic clearly spans multiple documents
+4. extract the strongest supporting passages before writing the final answer
+
+### Step 4: Compose the answer
+
+Your answer should feel like it comes from someone who actually read the source material, not from someone who only skimmed metadata.
+
+Default answer structure:
+
+1. **Direct answer**
+   - lead with what the source actually said about the topic
+   - use the source's ideas, not generic filler advice
+
+2. **Source and context**
+   - tell the user exactly where this came from
+   - for podcasts: mention the guest and date when available
+   - for newsletters/articles: mention the title and date when available
+
+3. **Key quotes or close paraphrases**
+   - pull specific supporting language, reasoning, or examples
+   - paraphrase carefully when that reads better, but stay faithful to the source
+   - keep timestamps or links when they materially improve traceability
+
+4. **Synthesis across sources**
+   - if multiple sources are relevant, weave them together
+   - note whether they agree, disagree, or build on each other
+   - separate the source's view from your synthesis
+
+### Step 5: Use deep reading when needed
+
+If the best evidence lives in long transcripts or long-form articles:
+- shortlist documents first
+- inspect the most relevant sections before broadening out
+- avoid dumping long raw source text into the answer
+- return a compact evidence package instead of a transcript recap
+
+## Response language
+
+Match the user's language unless a saved preference overrides it.
+
+Rules:
+- Chinese user + no explicit override -> respond in Chinese
+- English user + no explicit override -> respond in English
+- when responding in Chinese about English-language sources, keep short key terms or short original phrases in English only when they improve accuracy
+- keep the main explanation in the chosen answer language
+
+## What makes a great answer
+
+- specificity over generality
+- clear source attribution
+- evidence from original documents, not only search summaries
+- strong synthesis when multiple sources matter
+- honesty about gaps when the source does not actually cover the topic
+
+Examples of good behavior:
+- “In Lenny's interview with Brian Halligan on 2025-02-01...”
+- “In the newsletter '[Title]' ([date]), the main argument is...”
+- “Across these two sources, the shared idea is..., but they differ on...”
+
+## Common question patterns
+
+- “X 怎么看 Y？”
+  - if the source has first-person essays or newsletters, check those first
+  - then use interviews or podcasts to deepen or contrast the view
+
+- “谁谈过 Y？”
+  - search broadly across close phrasings
+  - collect multiple relevant guests or articles, then synthesize
+
+- “某嘉宾说了什么？”
+  - search the guest name directly
+  - open the transcript before answering
+
+- “哪一天聊过 Y？”
+  - search for the topic, then use the result metadata and original document to confirm the date
+
+- “关于 Y 最好的建议是什么？”
+  - search across both interviews and written pieces when available
+  - synthesize repeated themes and call out the strongest source-backed recommendation
+
+## Save standout answers
+
+If the user wants to save the result into the dashboard:
+
+```bash
+cat answer.md | amacli save-answer \
+  --question "What does this source say about PM hiring?"
+```
+
+## References
+
+Load only what you need:
+- install and onboarding: `references/INSTALL.md`
+- search patterns: `references/query-templates.md`
+- CLI and API details: `references/api_reference.md`

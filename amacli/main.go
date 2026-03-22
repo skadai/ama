@@ -23,7 +23,7 @@ const (
 	defaultHTTPTimeout = 60 * time.Second
 )
 
-var version = "0.3.0"
+var version = "dev"
 
 type envGetter func(string) string
 
@@ -220,6 +220,8 @@ func run(
 		}
 
 		return executeSource(ctx, client, configPath, localCfg, rest[1:], stdout, stderr)
+	case "language", "lang":
+		return executeLanguage(configPath, localCfg, rest[1:], stdout, stderr)
 	case "auth":
 		return executeAuth(ctx, client, configPath, localCfg, rest[1:], stdout, stderr)
 	default:
@@ -410,6 +412,89 @@ func executeSourceList(
 		"sources":        me.Access.Sources,
 		"default_source": resolveDefaultSource(cfg.DefaultSource, me.Access.Sources),
 	})
+}
+
+func executeLanguage(
+	configPath string,
+	cfg localConfig,
+	args []string,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
+	if len(args) == 0 {
+		printLanguageUsage(stderr)
+		return errors.New("missing language subcommand")
+	}
+
+	switch args[0] {
+	case "show", "get", "current":
+		return executeLanguageShow(cfg, stdout)
+	case "set":
+		return executeLanguageSet(configPath, cfg, args[1:], stdout, stderr)
+	default:
+		printLanguageUsage(stderr)
+		return fmt.Errorf("unknown language subcommand: %s", args[0])
+	}
+}
+
+func executeLanguageShow(cfg localConfig, stdout io.Writer) error {
+	value := strings.TrimSpace(cfg.PreferredLanguage)
+	if value == "" {
+		return writeJSON(stdout, map[string]any{
+			"preferred_language": nil,
+		})
+	}
+
+	return writeJSON(stdout, map[string]any{
+		"preferred_language": value,
+	})
+}
+
+func executeLanguageSet(
+	configPath string,
+	cfg localConfig,
+	args []string,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
+	setFlags := flag.NewFlagSet("language set", flag.ContinueOnError)
+	setFlags.SetOutput(stderr)
+
+	var value string
+	setFlags.StringVar(&value, "language", "", "preferred answer language: zh or en")
+	setFlags.StringVar(&value, "lang", "", "preferred answer language: zh or en")
+
+	if err := setFlags.Parse(args); err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(value) == "" && len(setFlags.Args()) > 0 {
+		value = setFlags.Args()[0]
+	}
+
+	value = normalizePreferredLanguage(value)
+	if value == "" {
+		return errors.New("language must be zh or en")
+	}
+
+	cfg.PreferredLanguage = value
+	if err := writeLocalConfig(configPath, cfg); err != nil {
+		return err
+	}
+
+	_, err := fmt.Fprintf(stdout, "Saved preferred language %q to %s\n", value, configPath)
+	return err
+}
+
+func normalizePreferredLanguage(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "zh", "zh-cn", "zh-hans", "cn", "chinese":
+		return "zh"
+	case "en", "en-us", "en-gb", "english":
+		return "en"
+	default:
+		return ""
+	}
 }
 
 func executeSourceSetDefault(
@@ -823,6 +908,16 @@ Usage:
 `)
 }
 
+func printLanguageUsage(writer io.Writer) {
+	_, _ = fmt.Fprintf(writer, `Manage the preferred answer language.
+
+Usage:
+  amacli language show
+  amacli language set <zh|en>
+  amacli language set --language <zh|en>
+`)
+}
+
 func printUsage(writer io.Writer) {
 	_, _ = fmt.Fprintf(writer, `amacli is a small AMA API client.
 
@@ -836,6 +931,7 @@ Commands:
   document|doc         Fetch the original markdown for an article
   save-answer|save     Save a question, final answer, and citations
   source|sources       List allowed sources or set the default source
+  language|lang        Show or set the preferred answer language
   auth                 Start or complete browser-based CLI login
   version              Print the CLI version
   help                 Show this help
@@ -847,6 +943,7 @@ Examples:
   amacli me
   amacli source list
   amacli source set-default lenny
+  amacli language set zh
   amacli search --query "How does Lenny think about MVP scope?"
   amacli document --id 42
   amacli save-answer --question "What does Lenny say about PM hiring?" --answer-file ./answer.md --citations-file ./citations.json

@@ -28,12 +28,13 @@ type pendingAuthState struct {
 }
 
 type localConfig struct {
-	BaseURL       string            `json:"base_url,omitempty"`
-	APIKey        string            `json:"api_key,omitempty"`
-	DefaultSource string            `json:"default_source,omitempty"`
-	User          *configuredUser   `json:"user,omitempty"`
-	PendingAuth   *pendingAuthState `json:"pending_auth,omitempty"`
-	UpdatedAt     string            `json:"updated_at,omitempty"`
+	BaseURL           string            `json:"base_url,omitempty"`
+	APIKey            string            `json:"api_key,omitempty"`
+	DefaultSource     string            `json:"default_source,omitempty"`
+	PreferredLanguage string            `json:"preferred_language,omitempty"`
+	User              *configuredUser   `json:"user,omitempty"`
+	PendingAuth       *pendingAuthState `json:"pending_auth,omitempty"`
+	UpdatedAt         string            `json:"updated_at,omitempty"`
 }
 
 func defaultConfigPath(getenv envGetter) string {

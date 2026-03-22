@@ -89,7 +89,7 @@ CLI 会：
 amacli auth complete
 ```
 
-成功后，`amacli` 会把 `base_url`、`api_key`、用户信息，以及默认 `source` 写入本地 `config.json`。
+成功后，`amacli` 会把 `base_url`、`api_key`、用户信息，以及当前默认 `source` 写入本地 `config.json`；`preferred_language` 可以通过 `amacli language set` 单独保存。
 
 你也可以查看当前状态：
 
@@ -144,6 +144,23 @@ amacli source set-default lenny
 ```
 
 设置后，`search`、`document`、`doc`、`save-answer` 这些命令在你不显式传 `--source` 时，都会优先使用 `~/.config/amacli/config.json` 里的 `default_source`。
+
+## `language`
+
+设置默认回答语言，让 skill / agent 优先按这个语言输出：
+
+```bash
+amacli language show
+amacli language set zh
+amacli language set en
+```
+
+当前只支持：
+
+- `zh`
+- `en`
+
+设置后，agent 在没有额外指示时，应优先遵循 `~/.config/amacli/config.json` 里的 `preferred_language`。
 
 ## `save-answer`
 

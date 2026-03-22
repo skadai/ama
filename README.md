@@ -2,5 +2,5 @@
 
 This repository contains the standalone AMA tooling bundle:
 
-- `amacli/`: the Go CLI for AMA authentication, retrieval, and saved-answer workflows
-- `skills/`: project-specific Codex/Cline skill definitions for AMA workflows
+- `amacli/`: the Go CLI for AMA authentication, retrieval, answer saving, source selection, and language preference
+- `skills/ama/`: the installable AMA skill definition and references

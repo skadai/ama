@@ -1,6 +1,6 @@
-# Ama Lenny API reference
+# Ama API reference
 
-This skill uses `amacli`, which wraps the local Ama API.
+This skill uses `amacli`, which wraps the Ask Me Anything API.
 
 Default base URL:
 
@@ -10,19 +10,13 @@ http://localhost:3000
 
 ## Authentication
 
-Protected endpoints accept either:
+Protected endpoints accept:
 
 ```http
 Authorization: Bearer YOUR_API_KEY
 ```
 
-or:
-
-```http
-x-api-key: YOUR_API_KEY
-```
-
-`amacli` currently sends:
+`amacli` sends:
 
 ```http
 Authorization: Bearer YOUR_API_KEY
@@ -33,15 +27,11 @@ x-ama-client-type: cli
 
 ### `amacli health`
 
-Checks server health.
-
 ```bash
 amacli health
 ```
 
 ### `amacli auth login`
-
-Starts the browser approval flow and stores a pending device session locally.
 
 ```bash
 amacli auth login
@@ -49,15 +39,11 @@ amacli auth login
 
 ### `amacli auth complete`
 
-Claims the approved device session, creates the API key on the server, and writes it to local `config.json`.
-
 ```bash
 amacli auth complete
 ```
 
 ### `amacli auth status`
-
-Shows whether local CLI auth is already configured and whether a pending browser authorization exists.
 
 ```bash
 amacli auth status
@@ -65,15 +51,36 @@ amacli auth status
 
 ### `amacli me`
 
-Inspects the current API key, user, and source access.
-
 ```bash
 amacli me
 ```
 
-### `amacli search`
+### `amacli language show`
 
-Searches indexed Lenny content.
+```bash
+amacli language show
+```
+
+### `amacli language set`
+
+```bash
+amacli language set zh
+amacli language set en
+```
+
+### `amacli source list`
+
+```bash
+amacli source list
+```
+
+### `amacli source set-default`
+
+```bash
+amacli source set-default lenny
+```
+
+### `amacli search`
 
 ```bash
 amacli search --query "How does Lenny think about MVP scope?" --top-k 5
@@ -85,14 +92,7 @@ Supported flags:
 - `--source` (repeatable)
 - `--content-type` (repeatable)
 
-Current useful content types:
-- `podcast_episode`
-- `newsletter_article`
-- `video`
-
 ### `amacli document`
-
-Fetches original markdown content for a result.
 
 ```bash
 amacli document --source lenny --id 42
@@ -105,8 +105,6 @@ amacli doc lenny 42
 ```
 
 ### `amacli save-answer`
-
-Saves one final answer into the user's dashboard knowledge wall.
 
 ```bash
 cat answer.md | amacli save-answer \
@@ -151,36 +149,6 @@ curl 'http://localhost:3000/v1/documents/lenny/42' \
   -H 'Authorization: Bearer YOUR_API_KEY'
 ```
 
-## Working fields to keep from responses
-
-When reasoning in the skill, preserve these fields from search responses when available:
-
-- `id`
-- `source_slug`
-- `document_path`
-- `title`
-- `type`
-- `guest`
-- `date`
-- `summary`
-- `source_path`
-- `score`
-- `recall_sources`
-
-When opening a document response, preserve:
-
-- `title`
-- `type`
-- `guest`
-- `date`
-- `summary`
-- `source_path`
-- `content`
-- `content_format`
-- `tags`
-
-Hide these working details in the final polished answer unless the user explicitly asks for retrieval mechanics.
-
 ### `POST /v1/saved-answers`
 
 ```bash
@@ -189,7 +157,7 @@ curl -X POST 'http://localhost:3000/v1/saved-answers' \
   -H 'Authorization: Bearer YOUR_API_KEY' \
   -d '{
     "question": "What does Lenny say about PM hiring?",
-    "answer": "My take: structured interviews matter...",
+    "answer": "Structured interviews matter...",
     "source_slugs": ["lenny"],
     "citations": []
   }'
