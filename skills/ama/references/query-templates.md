@@ -37,7 +37,17 @@ amacli search --query "MVP scope" --content-type podcast_episode --top-k 5
 amacli search --query "MVP scope" --content-type newsletter_article --top-k 5
 ```
 
-## 5. Fetch original documents
+## 5. Balanced search by content type
+
+Use this when one format keeps crowding out the other and you want newsletters plus podcasts both represented in the shortlist.
+
+```bash
+amacli search --balanced-content-types \
+  --query "What does Lenny say about PM hiring?" \
+  --top-k 6
+```
+
+## 6. Fetch original documents
 
 Once you have strong candidates, open the original markdown before answering.
 
@@ -51,26 +61,42 @@ Shorthand:
 amacli doc lenny 42
 ```
 
-## 6. Working merge strategy
+## 7. Working merge strategy
 
 After running more than one search:
 - merge on `id`
 - preserve `title`, `type`, `date`, `guest`, `summary`, `document_path`, `score`, and `source_slug`
 - shortlist the 3-5 strongest results before opening originals
 
-## 7. Working answer checklist
+## 8. Working answer checklist
 
 Before you write the final answer:
 1. confirm the strongest result is actually relevant
 2. open the top original document(s)
 3. extract the best supporting reasoning or quote
 4. note timestamps and links when the source is a transcript or video
-5. structure the answer as direct answer, source context, evidence, then synthesis
+5. structure the answer as direct answer, source context, evidence, synthesis, then citations
 
-## 8. Default answer pattern
+## 9. Default answer pattern
 
 Use this pattern unless the user wants a different format:
 - direct answer first
 - source and context second
 - key quotes or close paraphrases third
-- synthesis across sources last
+- synthesis across sources fourth
+- citations list last
+
+## 10. Save approved answers when enabled
+
+Use this only if the user opted into private auto-save, or explicitly asks to keep the answer.
+
+```bash
+cat answer.md | amacli save-answer \
+  --question "What does this source say about PM hiring?" \
+  --citations-file citations.json
+```
+
+After saving:
+- read `saved_answer.view_url` from the JSON response
+- append one final line pointing the user to that private page
+- if `view_url` is missing, build `https://askmeanything.pro/dashboard/answers/<id>` from `saved_answer.id`

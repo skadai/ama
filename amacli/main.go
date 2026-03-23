@@ -248,6 +248,15 @@ func executeMe(ctx context.Context, client *amaClient, stdout io.Writer) error {
 	return writeJSON(stdout, response)
 }
 
+type searchAPIResponse struct {
+	RequestID string           `json:"request_id,omitempty"`
+	Query     string           `json:"query,omitempty"`
+	Terms     []string         `json:"terms,omitempty"`
+	Keywords  []string         `json:"keywords,omitempty"`
+	Results   []map[string]any `json:"results,omitempty"`
+	Usage     map[string]any   `json:"usage,omitempty"`
+}
+
 func executeSearch(
 	ctx context.Context,
 	client *amaClient,
@@ -263,12 +272,14 @@ func executeSearch(
 	var topK int
 	var sources stringList
 	var contentTypes stringList
+	var balancedContentTypes bool
 
 	searchFlags.StringVar(&query, "query", "", "search query")
 	searchFlags.StringVar(&query, "q", "", "search query")
 	searchFlags.IntVar(&topK, "top-k", 8, "max result count")
 	searchFlags.Var(&sources, "source", "source slug (repeatable)")
 	searchFlags.Var(&contentTypes, "content-type", "content type filter (repeatable)")
+	searchFlags.BoolVar(&balancedContentTypes, "balanced-content-types", false, "run one search per content type and merge results to keep newsletters and podcasts represented")
 
 	if err := searchFlags.Parse(args); err != nil {
 		return err
@@ -294,6 +305,10 @@ func executeSearch(
 		request.Sources = []string{firstNonEmpty(localCfg.DefaultSource, defaultSource)}
 	}
 
+	if balancedContentTypes {
+		return executeBalancedSearch(ctx, client, request, []string(contentTypes), stdout)
+	}
+
 	if len(contentTypes) > 0 {
 		request.ContentTypes = []string(contentTypes)
 	}
@@ -304,6 +319,134 @@ func executeSearch(
 	}
 
 	return writeJSON(stdout, response)
+}
+
+func executeBalancedSearch(
+	ctx context.Context,
+	client *amaClient,
+	request searchRequest,
+	contentTypes []string,
+	stdout io.Writer,
+) error {
+	balancedTypes := uniqueStringsPreserveOrder(contentTypes)
+	if len(balancedTypes) == 0 {
+		balancedTypes = []string{"newsletter_article", "podcast_episode"}
+	}
+
+	groups := make(map[string][]map[string]any, len(balancedTypes))
+	requestSummaries := make([]map[string]any, 0, len(balancedTypes))
+	terms := []string{}
+	keywords := []string{}
+
+	for _, contentType := range balancedTypes {
+		typedRequest := request
+		typedRequest.ContentTypes = []string{contentType}
+
+		var response searchAPIResponse
+		if err := client.post(ctx, "/v1/search", typedRequest, &response); err != nil {
+			return err
+		}
+
+		groups[contentType] = response.Results
+		terms = append(terms, response.Terms...)
+		keywords = append(keywords, response.Keywords...)
+		requestSummaries = append(requestSummaries, map[string]any{
+			"content_type": contentType,
+			"request_id":   response.RequestID,
+			"result_count": len(response.Results),
+		})
+	}
+
+	mergedResults := interleaveSearchResults(groups, balancedTypes, request.TopK)
+
+	response := map[string]any{
+		"query":                  request.Query,
+		"sources":                request.Sources,
+		"strategy":               "balanced_content_types",
+		"balanced_content_types": balancedTypes,
+		"results":                mergedResults,
+		"requests":               requestSummaries,
+		"usage": map[string]any{
+			"result_count":             len(mergedResults),
+			"per_type_requested_top_k": request.TopK,
+		},
+	}
+
+	if dedupedTerms := uniqueStringsPreserveOrder(terms); len(dedupedTerms) > 0 {
+		response["terms"] = dedupedTerms
+	}
+	if dedupedKeywords := uniqueStringsPreserveOrder(keywords); len(dedupedKeywords) > 0 {
+		response["keywords"] = dedupedKeywords
+	}
+
+	return writeJSON(stdout, response)
+}
+
+func interleaveSearchResults(
+	groups map[string][]map[string]any,
+	order []string,
+	limit int,
+) []map[string]any {
+	if limit <= 0 {
+		return nil
+	}
+
+	positions := make(map[string]int, len(order))
+	seen := make(map[string]struct{})
+	results := make([]map[string]any, 0, limit)
+
+	for len(results) < limit {
+		progress := false
+		for _, contentType := range order {
+			items := groups[contentType]
+			for positions[contentType] < len(items) {
+				candidate := items[positions[contentType]]
+				positions[contentType]++
+				key := searchResultKey(candidate)
+				if _, ok := seen[key]; ok {
+					continue
+				}
+				seen[key] = struct{}{}
+				results = append(results, candidate)
+				progress = true
+				break
+			}
+			if len(results) >= limit {
+				break
+			}
+		}
+		if !progress {
+			break
+		}
+	}
+
+	return results
+}
+
+func searchResultKey(result map[string]any) string {
+	idPart := strings.TrimSpace(fmt.Sprint(result["id"]))
+	sourcePart := strings.TrimSpace(fmt.Sprint(result["source_slug"]))
+	if sourcePart != "" || idPart != "" {
+		return sourcePart + ":" + idPart
+	}
+	return strings.TrimSpace(fmt.Sprint(result["title"]))
+}
+
+func uniqueStringsPreserveOrder(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" {
+			continue
+		}
+		if _, ok := seen[trimmed]; ok {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		result = append(result, trimmed)
+	}
+	return result
 }
 
 func executeDocument(
@@ -945,6 +1088,7 @@ Examples:
   amacli source set-default lenny
   amacli language set zh
   amacli search --query "How does Lenny think about MVP scope?"
+  amacli search --balanced-content-types --query "What does Lenny say about PM hiring?" --top-k 6
   amacli document --id 42
   amacli save-answer --question "What does Lenny say about PM hiring?" --answer-file ./answer.md --citations-file ./citations.json
 

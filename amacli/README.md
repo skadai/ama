@@ -15,11 +15,15 @@ cd amacli
 go install .
 ```
 
-如果你不想写入全局 `GOBIN`，也可以本地构建：
+如果你不想写入全局 `GOBIN`，也可以本地构建后放到 `~/.local/bin/amacli`，避免权限问题：
 
 ```bash
 cd amacli
 go build -o ./bin/amacli .
+mkdir -p ~/.local/bin
+cp ./bin/amacli ~/.local/bin/amacli
+chmod +x ~/.local/bin/amacli
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 ## 发布构建
@@ -73,7 +77,7 @@ export AMA_CONFIG_PATH='/custom/path/config.json'
 
 ## 浏览器登录
 
-现在推荐直接用浏览器授权来完成首次配置：
+现在推荐直接用浏览器授权来完成首次配置。Agent 在确认 `amacli` 已安装并可执行后，应立即主动运行：
 
 ```bash
 amacli auth login
@@ -89,7 +93,7 @@ CLI 会：
 amacli auth complete
 ```
 
-成功后，`amacli` 会把 `base_url`、`api_key`、用户信息，以及当前默认 `source` 写入本地 `config.json`；`preferred_language` 可以通过 `amacli language set` 单独保存。
+成功后，`amacli` 会把 `base_url`、`api_key`、用户信息，以及当前默认 `source` 写入本地 `config.json`；`preferred_language` 可以通过 `amacli language set` 单独保存。Skill onboarding 还应该顺手问用户：是否要把优秀回答自动收藏到 AMA 网站，仅自己可见。
 
 你也可以查看当前状态：
 
@@ -129,6 +133,7 @@ amacli me
 amacli source list
 amacli source set-default lenny
 amacli --timeout 90s search --query 'How does Lenny think about MVP scope?'
+amacli search --balanced-content-types --query 'What does Lenny say about PM hiring?' --top-k 6
 amacli document --id 42
 amacli doc 42
 cat answer.md | amacli save-answer --question 'What does Lenny say about PM hiring?'
@@ -161,6 +166,22 @@ amacli language set en
 - `en`
 
 设置后，agent 在没有额外指示时，应优先遵循 `~/.config/amacli/config.json` 里的 `preferred_language`。
+
+## `search` balanced by content type
+
+When one format tends to dominate the results, use balanced search to issue one query per content type and merge the shortlist so newsletters and podcasts both get representation:
+
+```bash
+amacli search --balanced-content-types \
+  --query 'What does Lenny say about PM hiring?' \
+  --top-k 6
+```
+
+Notes:
+
+- default balanced types are `newsletter_article` and `podcast_episode`
+- if you also pass `--content-type`, balanced search uses those types instead
+- balanced search makes multiple API requests under the hood, one per content type
 
 ## `save-answer`
 
@@ -199,6 +220,6 @@ cat answer.md | amacli save-answer \
 ]
 ```
 
-保存成功后，用户可以在 `/dashboard` 页面看到自己的瀑布流收藏卡片。
+保存成功后，用户可以在 `/dashboard` 页面看到自己的瀑布流收藏卡片。API 响应还会返回 `saved_answer.view_url`，可直接附在回答末尾，引导用户去专属详情页阅读。
 
 除 `auth` 命令以外，其余命令默认输出格式化 JSON，便于 shell、agent、`jq`、以及 skill 工作流直接消费。

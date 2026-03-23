@@ -12,15 +12,17 @@ Current public source availability may be narrow, but the skill name stays gener
 ## Quick start
 
 1. For first-time install or onboarding, read `references/INSTALL.md`.
-2. Before answering in a fresh session, check:
+2. During onboarding, once `amacli` is installed and on `PATH`, trigger `amacli auth login` automatically. Do not wait for the user to type it manually.
+3. During onboarding, ask whether the user wants strong answers to be auto-saved to their private AMA website account (visible only to them).
+4. Before answering in a fresh session, check:
    - `amacli health`
    - `amacli auth status`
    - `amacli me`
    - `amacli language show`
    - `amacli source list`
-3. Prefer the saved `preferred_language` for answer language.
-4. Prefer the saved `default_source` unless the user explicitly asks for another source.
-5. Start with one focused `amacli search`, then open the strongest originals with `amacli document`.
+5. Prefer the saved `preferred_language` for answer language.
+6. Prefer the saved `default_source` unless the user explicitly asks for another source.
+7. Start with one focused `amacli search`, then open the strongest originals with `amacli document`.
 
 ## How the knowledge layer works
 
@@ -48,6 +50,8 @@ Rules:
 - if no language preference is saved, mirror the user's current language
 - use the saved default source when the user does not specify one
 - if the current public source is only `lenny`, that is fine; do not rename the skill because of one source
+- during first-time onboarding, once `amacli` is available, immediately run `amacli auth login`
+- during onboarding, explicitly ask whether the user wants auto-save for good answers into their private AMA dashboard
 
 ### Step 2: Search for relevant content
 
@@ -72,12 +76,14 @@ When the user asks about a specific guest or person:
 When the user asks about a topic:
 - search broadly across close phrasings
 - prefer 3-5 strong candidates over a wide noisy list
+- when podcasts dominate and newsletters disappear, or vice versa, use balanced per-type search so both formats stay represented
 
 When the question clearly points to one format, narrow by content type:
 
 ```bash
 amacli search --query "MVP scope" --content-type podcast_episode --top-k 5
 amacli search --query "MVP scope" --content-type newsletter_article --top-k 5
+amacli search --balanced-content-types --query "PM hiring" --top-k 6
 ```
 
 ### Step 3: Read the original sources carefully
@@ -132,11 +138,28 @@ Default answer structure:
    - pull specific supporting language, reasoning, or examples
    - paraphrase carefully when that reads better, but stay faithful to the source
    - keep timestamps or links when they materially improve traceability
+   - when quoting directly from English-language sources, always include the original English text
+   - you may add a Chinese translation alongside, but the original English must be present
 
 4. **Synthesis across sources**
    - if multiple sources are relevant, weave them together
    - note whether they agree, disagree, or build on each other
    - separate the source's view from your synthesis
+
+5. **Citations**
+   - always end the answer with a citation list
+   - list every source you relied on, even if it was only quoted once
+   - include document id, title, type, date, and guest when available
+   - preferred format: `[source_slug/id] Title (type, date) — Guest`
+   - example: `[lenny/700] How to know if you've got product-market fit (newsletter_article, 2020-01-28)`
+
+6. **Private save link when enabled**
+   - if the user opted into auto-save during onboarding, call `amacli save-answer` after you finish the final answer
+   - only auto-save final answers that are strong enough to keep; never save drafts, partial work, or low-confidence replies
+   - prefer passing structured citations with `--citations-file`; otherwise make sure the answer ends with a parseable citations section
+   - read `saved_answer.view_url` from the command response
+   - if `view_url` is missing, fall back to `saved_answer.id` and build `https://askmeanything.pro/dashboard/answers/<id>`
+   - after saving, add one final line at the end of the answer telling the user they can read it more comfortably on that private page
 
 ### Step 5: Use deep reading when needed
 
@@ -154,6 +177,8 @@ Rules:
 - Chinese user + no explicit override -> respond in Chinese
 - English user + no explicit override -> respond in English
 - when responding in Chinese about English-language sources, keep short key terms or short original phrases in English only when they improve accuracy
+- when quoting directly from an English-language source, always include the original English quote verbatim
+- if helpful, add a Chinese translation after it, but do not omit the original English
 - keep the main explanation in the chosen answer language
 
 ## What makes a great answer
@@ -193,12 +218,25 @@ Examples of good behavior:
 
 ## Save standout answers
 
-If the user wants to save the result into the dashboard:
+During onboarding, ask once: do you want me to automatically save especially good answers to your private AMA dashboard, visible only to you?
+
+Rules:
+- if the user says yes, auto-save good final answers after you finish them
+- if the user says no, do not auto-save unless they explicitly ask
+- if the preference is still unknown, ask before the first save-worthy answer
+
+Command pattern:
 
 ```bash
 cat answer.md | amacli save-answer \
   --question "What does this source say about PM hiring?"
 ```
+
+After saving:
+- parse `saved_answer.view_url` from the response
+- append a final sentence such as:
+  - Chinese: `你也可以在这个仅自己可见的专属页面里更舒服地查看这条收藏：https://askmeanything.pro/dashboard/answers/<id>`
+  - English: `You can also read this saved answer on your private AMA page: https://askmeanything.pro/dashboard/answers/<id>`
 
 ## References
 

@@ -109,6 +109,70 @@ func TestSearchCommandUsesDefaultsAndHeaders(t *testing.T) {
 	}
 }
 
+func TestSearchCommandBalancedContentTypesMergesNewsletterAndPodcast(t *testing.T) {
+	t.Parallel()
+
+	requestCounts := map[string]int{}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			t.Fatalf("unexpected method: %s", request.Method)
+		}
+		if request.URL.Path != "/v1/search" {
+			t.Fatalf("unexpected path: %s", request.URL.Path)
+		}
+
+		var payload searchRequest
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if len(payload.ContentTypes) != 1 {
+			t.Fatalf("expected one content type per request: %+v", payload)
+		}
+		contentType := payload.ContentTypes[0]
+		requestCounts[contentType]++
+
+		writer.Header().Set("Content-Type", "application/json")
+		switch contentType {
+		case "newsletter_article":
+			_, _ = writer.Write([]byte(`{"request_id":"req_news","query":"pm hiring","terms":["pm hiring"],"keywords":["pm","hiring"],"results":[{"id":100,"source_slug":"lenny","title":"Newsletter result","type":"newsletter_article"}]}`))
+		case "podcast_episode":
+			_, _ = writer.Write([]byte(`{"request_id":"req_pod","query":"pm hiring","terms":["pm hiring"],"keywords":["pm","hiring"],"results":[{"id":200,"source_slug":"lenny","title":"Podcast result","type":"podcast_episode"}]}`))
+		default:
+			t.Fatalf("unexpected content type: %s", contentType)
+		}
+	}))
+	defer server.Close()
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	err := run(
+		context.Background(),
+		[]string{"--base-url", server.URL, "search", "--balanced-content-types", "--top-k", "4", "pm hiring"},
+		stdout,
+		stderr,
+		func(key string) string {
+			if key == "AMA_API_KEY" {
+				return "test-key"
+			}
+			return ""
+		},
+		server.Client(),
+	)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	if requestCounts["newsletter_article"] != 1 || requestCounts["podcast_episode"] != 1 {
+		t.Fatalf("unexpected per-type requests: %+v", requestCounts)
+	}
+	if !strings.Contains(stdout.String(), `"strategy": "balanced_content_types"`) {
+		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), `"title": "Newsletter result"`) || !strings.Contains(stdout.String(), `"title": "Podcast result"`) {
+		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+}
+
 func TestDocumentCommandSupportsPositionalArguments(t *testing.T) {
 	t.Parallel()
 

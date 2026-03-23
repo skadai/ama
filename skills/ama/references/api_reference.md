@@ -84,6 +84,7 @@ amacli source set-default lenny
 
 ```bash
 amacli search --query "How does Lenny think about MVP scope?" --top-k 5
+amacli search --balanced-content-types --query "What does Lenny say about PM hiring?" --top-k 6
 ```
 
 Supported flags:
@@ -91,6 +92,7 @@ Supported flags:
 - `--top-k`
 - `--source` (repeatable)
 - `--content-type` (repeatable)
+- `--balanced-content-types`
 
 ### `amacli document`
 
@@ -112,6 +114,8 @@ cat answer.md | amacli save-answer \
   --citations-file citations.json \
   --source lenny
 ```
+
+Successful responses include `saved_answer.id`, plus `saved_answer.view_path` and `saved_answer.view_url` for the user's private saved-answer page.
 
 ## Raw API equivalents
 
