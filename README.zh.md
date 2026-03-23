@@ -99,19 +99,21 @@ cd amacli
 
 ### 2）安装 AMA skill
 
-如果你的 agent 支持本地 `SKILL.md` bundle，就安装或引用本仓库里的 `skills/ama/`。
+先 clone AMA 仓库，这样 agent 才能拿到完整的 `skills/ama/` bundle 以及本地 `references/` 文档：
 
-最关键的文件是：
+```bash
+git clone https://github.com/skadai/ama.git
+```
+
+然后从 clone 下来的仓库里安装或引用 `skills/ama/`。
+
+最关键的入口文件是：
 
 - `skills/ama/SKILL.md`
 
-如果你更想直接用网站托管的公开 skill 文件，也可以直接下载：
+网站托管的 `skill.md` 只是公开的单文件版本，**不包含**完整的 `references/` 目录，所以不足以支持完整的本地 onboarding。
 
-```bash
-curl -L https://askmeanything.pro/skill.md -o skill.md
-```
-
-如果你还想下载 onboarding 说明：
+如果你只想单独下载网站托管的 onboarding 说明，仍然可以：
 
 ```bash
 curl -L https://askmeanything.pro/install.md -o install.md

@@ -99,19 +99,21 @@ By default:
 
 ### 2) Install the AMA skill
 
-If your agent supports local `SKILL.md` bundles, install or reference `skills/ama/` from this repo.
+Clone the AMA repo so your agent gets the full `skills/ama/` bundle plus the `references/` docs locally:
 
-At minimum, the key file is:
+```bash
+git clone https://github.com/skadai/ama.git
+```
+
+Then install or reference `skills/ama/` from the cloned repo.
+
+At minimum, the key entry file is:
 
 - `skills/ama/SKILL.md`
 
-If you prefer the website-hosted public skill file, you can also download it directly:
+The website-hosted `skill.md` is only a public single-file version and does **not** include the full `references/` directory, so it is not enough for complete local onboarding.
 
-```bash
-curl -L https://askmeanything.pro/skill.md -o skill.md
-```
-
-For the hosted onboarding instructions:
+If you only want the hosted onboarding instructions, you can still download them separately:
 
 ```bash
 curl -L https://askmeanything.pro/install.md -o install.md

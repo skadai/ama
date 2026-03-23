@@ -43,15 +43,19 @@ Default behavior:
 - without `--version`, the binary version is `dev`
 - default API base URL is `https://askmeanything.pro`
 
-## 2. Download the skill file
+## 2. Clone the AMA repo
 
-Download the current public skill markdown:
+Clone the AMA repo so you have the full local skill bundle plus the supporting `references/` docs:
 
 ```bash
-curl -L https://askmeanything.pro/skill.md -o skill.md
+git clone https://github.com/skadai/ama.git
 ```
 
-If you also want the onboarding guide locally:
+Then install or reference `skills/ama/` from the cloned repo.
+
+The website-hosted `skill.md` is only a public single-file copy and does **not** include the full `references/` directory, so do not use it as the only local install path.
+
+If you also want the hosted onboarding guide separately:
 
 ```bash
 curl -L https://askmeanything.pro/install.md -o install.md
