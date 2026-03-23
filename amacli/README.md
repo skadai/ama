@@ -2,7 +2,7 @@
 
 `amacli` 是一个极小的 Go 命令行工具，用来访问当前项目已经提供的 AMA API。
 
-默认服务地址是 `http://localhost:3000`，适合本地开发、skill 调用，以及浏览器登录联调。
+默认服务地址是 `https://askmeanything.pro`。本地开发时可通过 `AMA_BASE_URL` 环境变量覆盖为 `http://localhost:3000`。
 
 ## 前置要求
 
@@ -106,7 +106,7 @@ amacli auth logout
 ## 环境变量
 
 ```bash
-export AMA_BASE_URL='http://localhost:3000'
+export AMA_BASE_URL='https://askmeanything.pro'
 export AMA_API_KEY='YOUR_API_KEY'
 export AMA_CONFIG_PATH='~/.config/amacli/config.json'
 export AMA_HTTP_TIMEOUT='1m'
@@ -114,7 +114,7 @@ export AMA_HTTP_TIMEOUT='1m'
 
 说明：
 
-- `AMA_BASE_URL` 可选，默认就是 `http://localhost:3000`
+- `AMA_BASE_URL` 可选，默认就是 `https://askmeanything.pro`
 - `AMA_API_KEY` 可选；如果你已经跑过 `amacli auth complete`，CLI 会自动从本地 `config.json` 读取
 - `AMA_CONFIG_PATH` 可选；默认写入 `~/.config/amacli/config.json`
 - `AMA_HTTP_TIMEOUT` 可选；默认是 `1m`，本地 dev server 慢的时候建议调大，比如 `90s`

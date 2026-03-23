@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultBaseURL     = "http://localhost:3000"
+	defaultBaseURL     = "https://askmeanything.pro"
 	defaultSource      = "lenny"
 	defaultHTTPTimeout = 60 * time.Second
 )
@@ -949,7 +949,7 @@ Examples:
   amacli save-answer --question "What does Lenny say about PM hiring?" --answer-file ./answer.md --citations-file ./citations.json
 
 Environment:
-  AMA_BASE_URL         Default: http://localhost:3000
+  AMA_BASE_URL         Default: https://askmeanything.pro
   AMA_API_KEY          Optional when config.json already contains a key
   AMA_CONFIG_PATH      Optional path for amacli config.json
   AMA_HTTP_TIMEOUT     Optional HTTP timeout, default: 1m

@@ -5,7 +5,7 @@ This skill uses `amacli`, which wraps the Ask Me Anything API.
 Default base URL:
 
 ```text
-http://localhost:3000
+https://askmeanything.pro
 ```
 
 ## Authentication
@@ -118,20 +118,20 @@ cat answer.md | amacli save-answer \
 ### `GET /v1/health`
 
 ```bash
-curl 'http://localhost:3000/v1/health'
+curl 'https://askmeanything.pro/v1/health'
 ```
 
 ### `GET /v1/me`
 
 ```bash
-curl 'http://localhost:3000/v1/me' \
+curl 'https://askmeanything.pro/v1/me' \
   -H 'Authorization: Bearer YOUR_API_KEY'
 ```
 
 ### `POST /v1/search`
 
 ```bash
-curl -X POST 'http://localhost:3000/v1/search' \
+curl -X POST 'https://askmeanything.pro/v1/search' \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer YOUR_API_KEY' \
   -H 'x-ama-client-type: cli' \
@@ -145,14 +145,14 @@ curl -X POST 'http://localhost:3000/v1/search' \
 ### `GET /v1/documents/:sourceSlug/:articleId`
 
 ```bash
-curl 'http://localhost:3000/v1/documents/lenny/42' \
+curl 'https://askmeanything.pro/v1/documents/lenny/42' \
   -H 'Authorization: Bearer YOUR_API_KEY'
 ```
 
 ### `POST /v1/saved-answers`
 
 ```bash
-curl -X POST 'http://localhost:3000/v1/saved-answers' \
+curl -X POST 'https://askmeanything.pro/v1/saved-answers' \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer YOUR_API_KEY' \
   -d '{
