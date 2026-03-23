@@ -144,7 +144,8 @@ The local config stores:
 The skill should:
 - trigger `amacli auth login` automatically once installation is complete
 - answer in the saved language unless the user overrides it
-- use the saved default source unless the user overrides it
+- let `search` cover all accessible sources by default unless the user overrides it with an explicit source filter
+- use the saved default source for commands that need a concrete source slug, such as `document` and `save-answer`
 - ask whether private auto-save should be enabled during onboarding
 - if auto-save is enabled, save strong final answers and append the private `view_url` at the end
 - open original documents before making strong claims

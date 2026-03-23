@@ -201,7 +201,7 @@ func run(
 			return err
 		}
 
-		return executeSearch(ctx, client, rest[1:], stdout, stderr, localCfg)
+		return executeSearch(ctx, client, rest[1:], stdout, stderr)
 	case "document", "doc":
 		if err := requireAPIKey(client.apiKey); err != nil {
 			return err
@@ -263,7 +263,6 @@ func executeSearch(
 	args []string,
 	stdout io.Writer,
 	stderr io.Writer,
-	localCfg localConfig,
 ) error {
 	searchFlags := flag.NewFlagSet("search", flag.ContinueOnError)
 	searchFlags.SetOutput(stderr)
@@ -277,7 +276,7 @@ func executeSearch(
 	searchFlags.StringVar(&query, "query", "", "search query")
 	searchFlags.StringVar(&query, "q", "", "search query")
 	searchFlags.IntVar(&topK, "top-k", 8, "max result count")
-	searchFlags.Var(&sources, "source", "source slug (repeatable)")
+	searchFlags.Var(&sources, "source", "source slug filter (repeatable); omit or use \"all\" to search every source")
 	searchFlags.Var(&contentTypes, "content-type", "content type filter (repeatable)")
 	searchFlags.BoolVar(&balancedContentTypes, "balanced-content-types", false, "run one search per content type and merge results to keep newsletters and podcasts represented")
 
@@ -299,10 +298,8 @@ func executeSearch(
 		TopK:  topK,
 	}
 
-	if len(sources) > 0 {
-		request.Sources = []string(sources)
-	} else {
-		request.Sources = []string{firstNonEmpty(localCfg.DefaultSource, defaultSource)}
+	if resolvedSources := resolveSearchSources([]string(sources)); len(resolvedSources) > 0 {
+		request.Sources = resolvedSources
 	}
 
 	if balancedContentTypes {
@@ -361,7 +358,6 @@ func executeBalancedSearch(
 
 	response := map[string]any{
 		"query":                  request.Query,
-		"sources":                request.Sources,
 		"strategy":               "balanced_content_types",
 		"balanced_content_types": balancedTypes,
 		"results":                mergedResults,
@@ -370,6 +366,9 @@ func executeBalancedSearch(
 			"result_count":             len(mergedResults),
 			"per_type_requested_top_k": request.TopK,
 		},
+	}
+	if len(request.Sources) > 0 {
+		response["sources"] = request.Sources
 	}
 
 	if dedupedTerms := uniqueStringsPreserveOrder(terms); len(dedupedTerms) > 0 {
@@ -447,6 +446,21 @@ func uniqueStringsPreserveOrder(values []string) []string {
 		result = append(result, trimmed)
 	}
 	return result
+}
+
+func resolveSearchSources(values []string) []string {
+	normalized := uniqueStringsPreserveOrder(values)
+	if len(normalized) == 0 {
+		return nil
+	}
+
+	for _, value := range normalized {
+		if strings.EqualFold(strings.TrimSpace(value), "all") {
+			return nil
+		}
+	}
+
+	return normalized
 }
 
 func executeDocument(

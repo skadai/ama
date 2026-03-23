@@ -134,6 +134,7 @@ amacli source list
 amacli source set-default lenny
 amacli --timeout 90s search --query 'How does Lenny think about MVP scope?'
 amacli search --balanced-content-types --query 'What does Lenny say about PM hiring?' --top-k 6
+amacli search --source lenny --query 'What does Lenny say about MVP scope?'
 amacli document --id 42
 amacli doc 42
 cat answer.md | amacli save-answer --question 'What does Lenny say about PM hiring?'
@@ -148,7 +149,7 @@ amacli source list
 amacli source set-default lenny
 ```
 
-设置后，`search`、`document`、`doc`、`save-answer` 这些命令在你不显式传 `--source` 时，都会优先使用 `~/.config/amacli/config.json` 里的 `default_source`。
+设置后，`document`、`doc`、`save-answer` 这些命令在你不显式传 `--source` 时，会优先使用 `~/.config/amacli/config.json` 里的 `default_source`。`search` 默认会搜索全部 source；只有显式传 `--source` 时才会过滤。
 
 ## `language`
 
@@ -168,6 +169,8 @@ amacli language set en
 设置后，agent 在没有额外指示时，应优先遵循 `~/.config/amacli/config.json` 里的 `preferred_language`。
 
 ## `search` balanced by content type
+
+By default, `search` queries all accessible sources. If you want to narrow the search to one source, pass `--source <slug>`. You can also pass `--source all` to force all-source mode.
 
 When one format tends to dominate the results, use balanced search to issue one query per content type and merge the shortlist so newsletters and podcasts both get representation:
 

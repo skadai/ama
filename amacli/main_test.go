@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -48,7 +49,7 @@ func TestHealthCommand(t *testing.T) {
 	}
 }
 
-func TestSearchCommandUsesDefaultsAndHeaders(t *testing.T) {
+func TestSearchCommandSearchesAllSourcesByDefault(t *testing.T) {
 	t.Parallel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -76,8 +77,8 @@ func TestSearchCommandUsesDefaultsAndHeaders(t *testing.T) {
 		if payload.TopK != 5 {
 			t.Fatalf("unexpected topK: %+v", payload)
 		}
-		if len(payload.Sources) != 1 || payload.Sources[0] != defaultSource {
-			t.Fatalf("unexpected sources: %+v", payload.Sources)
+		if len(payload.Sources) != 0 {
+			t.Fatalf("expected search to omit sources and search all, got: %+v", payload.Sources)
 		}
 
 		writer.Header().Set("Content-Type", "application/json")
@@ -105,6 +106,181 @@ func TestSearchCommandUsesDefaultsAndHeaders(t *testing.T) {
 	}
 
 	if !strings.Contains(stdout.String(), `"id": 42`) {
+		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+}
+
+func TestResolveSearchSources(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input []string
+		want  []string
+	}{
+		{name: "empty means all", input: nil, want: nil},
+		{name: "explicit source filter", input: []string{"lenny"}, want: []string{"lenny"}},
+		{name: "dedupe filters", input: []string{"lenny", "lenny", "other-source"}, want: []string{"lenny", "other-source"}},
+		{name: "all overrides explicit filters", input: []string{"lenny", "all"}, want: nil},
+		{name: "all is case insensitive", input: []string{"ALL"}, want: nil},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			got := resolveSearchSources(test.input)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("resolveSearchSources(%v) = %v, want %v", test.input, got, test.want)
+			}
+		})
+	}
+}
+
+func TestSearchCommandSupportsExplicitSourceFilter(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			t.Fatalf("unexpected method: %s", request.Method)
+		}
+		if request.URL.Path != "/v1/search" {
+			t.Fatalf("unexpected path: %s", request.URL.Path)
+		}
+
+		var payload searchRequest
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if len(payload.Sources) != 1 || payload.Sources[0] != "other-source" {
+			t.Fatalf("unexpected sources: %+v", payload.Sources)
+		}
+
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"results":[{"id":42,"title":"Filtered"}]}`))
+	}))
+	defer server.Close()
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	err := run(
+		context.Background(),
+		[]string{"--base-url", server.URL, "search", "--source", "other-source", "product mvp"},
+		stdout,
+		stderr,
+		func(key string) string {
+			if key == "AMA_API_KEY" {
+				return "test-key"
+			}
+			return ""
+		},
+		server.Client(),
+	)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	if !strings.Contains(stdout.String(), `"title": "Filtered"`) {
+		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+}
+
+func TestSearchCommandTreatsSourceAllAsSearchAll(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			t.Fatalf("unexpected method: %s", request.Method)
+		}
+		if request.URL.Path != "/v1/search" {
+			t.Fatalf("unexpected path: %s", request.URL.Path)
+		}
+
+		var payload searchRequest
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if len(payload.Sources) != 0 {
+			t.Fatalf("expected --source all to omit sources, got: %+v", payload.Sources)
+		}
+
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"results":[{"id":42,"title":"All sources"}]}`))
+	}))
+	defer server.Close()
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	err := run(
+		context.Background(),
+		[]string{"--base-url", server.URL, "search", "--source", "all", "product mvp"},
+		stdout,
+		stderr,
+		func(key string) string {
+			if key == "AMA_API_KEY" {
+				return "test-key"
+			}
+			return ""
+		},
+		server.Client(),
+	)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	if !strings.Contains(stdout.String(), `"title": "All sources"`) {
+		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+}
+
+func TestSearchCommandIgnoresConfiguredDefaultSourceWhenSourceNotSpecified(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			t.Fatalf("unexpected method: %s", request.Method)
+		}
+		if request.URL.Path != "/v1/search" {
+			t.Fatalf("unexpected path: %s", request.URL.Path)
+		}
+
+		var payload searchRequest
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if len(payload.Sources) != 0 {
+			t.Fatalf("expected configured default source to be ignored for search, got: %+v", payload.Sources)
+		}
+
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"results":[{"id":42,"title":"All with config"}]}`))
+	}))
+	defer server.Close()
+
+	configPath := filepath.Join(t.TempDir(), "config.json")
+	if err := writeLocalConfig(configPath, localConfig{
+		BaseURL:       server.URL,
+		APIKey:        "test-key",
+		DefaultSource: "other-source",
+	}); err != nil {
+		t.Fatalf("writeLocalConfig returned error: %v", err)
+	}
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	err := run(
+		context.Background(),
+		[]string{"--config", configPath, "search", "product mvp"},
+		stdout,
+		stderr,
+		func(string) string { return "" },
+		server.Client(),
+	)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	if !strings.Contains(stdout.String(), `"title": "All with config"`) {
 		t.Fatalf("unexpected stdout: %s", stdout.String())
 	}
 }

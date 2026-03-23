@@ -77,7 +77,8 @@ Rules:
 - if `preferred_language` is `zh`, answer in Chinese unless the user clearly asks otherwise
 - if `preferred_language` is `en`, answer in English unless the user clearly asks otherwise
 - if no language preference is saved, mirror the user's current language
-- use the saved default source when the user does not specify one
+- `search` should cover all accessible sources when the user does not specify one
+- use the saved default source for commands that need a concrete source slug later, such as `document` or `save-answer`
 - if the current public source is only `lenny`, that is fine; do not rename the skill because of one source
 - during first-time onboarding, once `amacli` is available, immediately run `amacli auth login`
 - during onboarding, explicitly ask whether the user wants auto-save for good answers into their private AMA dashboard
