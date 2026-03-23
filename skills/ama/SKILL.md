@@ -23,6 +23,35 @@ Current public source availability may be narrow, but the skill name stays gener
 5. Prefer the saved `preferred_language` for answer language.
 6. Prefer the saved `default_source` unless the user explicitly asks for another source.
 7. Start with one focused `amacli search`, then open the strongest originals with `amacli document`.
+8. If the final answer may use direct quotes, extract the quote evidence from the original markdown before drafting the quoted answer.
+
+## Non-negotiable quote and save rules
+
+These are hard rules, not suggestions:
+
+1. **Quote extraction happens before the final answer.** Do not draft a quoted answer first and backfill citations later.
+2. **If you quote a podcast, you must first read the original transcript markdown with `amacli document`.** Then extract:
+   - the original English quote
+   - the nearest transcript timestamp
+   - a clickable YouTube timestamp link when the source provides a YouTube URL
+3. **If you quote a newsletter or article, you must first read the original markdown.** Keep the original English sentence, and include the source title or original URL.
+4. **If a direct quote appears in the final answer, the quote must appear in the final answer body.** Do not hide it only in a citations footer or tool payload.
+5. **If you save the answer, do not save a quote-stripped summary.** Preserve the same quoted evidence in `answer`, and mirror it in structured citations when you pass them.
+6. **Prefer explicit structured citations when saving.** Do not rely on a lossy summary-only `save-answer` payload.
+
+Required podcast quote format in the final answer:
+
+```text
+"English quote"（mm:ss）
+YouTube: https://www.youtube.com/watch?v=xxx&t=123s
+```
+
+Required newsletter/article quote format in the final answer:
+
+```text
+"English quote"
+Source: <title or original URL>
+```
 
 ## How the knowledge layer works
 
@@ -107,17 +136,29 @@ For podcast transcripts, pay attention to:
 - concrete examples, stories, and data points
 - the back-and-forth between host and guest
 - timestamps, links, or transcript markers when present
+- if you intend to quote, the exact English wording, the nearest timestamp, and the clickable YouTube timestamp link
 
 For newsletters and articles, pay attention to:
 - the author's own frameworks and opinions
 - examples, data, and case studies
 - actionable advice and decision rules
+- if you intend to quote, the exact English wording and the original source title or URL
 
 Preferred reading order:
 1. read the top result in full if it is short enough
 2. read the most relevant sections first if it is long
 3. open 1-2 additional sources when the topic clearly spans multiple documents
 4. extract the strongest supporting passages before writing the final answer
+5. if you may quote directly, build a compact evidence bundle before writing:
+   - `title`
+   - `type`
+   - `date`
+   - `guest` when available
+   - `document id`
+   - `english_quote` when quoted
+   - `timestamp` for podcasts
+   - clickable YouTube timestamp link for podcasts when available
+   - `source title` or original URL for newsletters/articles
 
 ### Step 4: Compose the answer
 
@@ -137,9 +178,23 @@ Default answer structure:
 3. **Key quotes or close paraphrases**
    - pull specific supporting language, reasoning, or examples
    - paraphrase carefully when that reads better, but stay faithful to the source
-   - keep timestamps or links when they materially improve traceability
    - when quoting directly from English-language sources, always include the original English text
    - you may add a Chinese translation alongside, but the original English must be present
+   - if quoting a podcast, use this exact block format:
+
+```text
+"English quote"（mm:ss）
+YouTube: https://www.youtube.com/watch?v=xxx&t=123s
+```
+
+   - if quoting a newsletter/article, use this exact block format:
+
+```text
+"English quote"
+Source: <title or original URL>
+```
+
+   - do not fabricate quotes; only quote wording you explicitly inspected in the original markdown
 
 4. **Synthesis across sources**
    - if multiple sources are relevant, weave them together
@@ -150,6 +205,8 @@ Default answer structure:
    - always end the answer with a citation list
    - list every source you relied on, even if it was only quoted once
    - include document id, title, type, date, and guest when available
+   - if you quoted a podcast, include the English quote, timestamp, and clickable YouTube timestamp link
+   - if you quoted a newsletter/article, include the English quote and source title or original URL
    - preferred format: `[source_slug/id] Title (type, date) — Guest`
    - example: `[lenny/700] How to know if you've got product-market fit (newsletter_article, 2020-01-28)`
 
@@ -168,6 +225,7 @@ If the best evidence lives in long transcripts or long-form articles:
 - inspect the most relevant sections before broadening out
 - avoid dumping long raw source text into the answer
 - return a compact evidence package instead of a transcript recap
+- when the user explicitly wants quotes or timestamps, bias toward deeper original-document inspection rather than summary-only answers
 
 ## Response language
 
@@ -188,6 +246,7 @@ Rules:
 - evidence from original documents, not only search summaries
 - strong synthesis when multiple sources matter
 - honesty about gaps when the source does not actually cover the topic
+- quote discipline: only quote after reading the original, and preserve traceability when you do
 
 Examples of good behavior:
 - “In Lenny's interview with Brian Halligan on 2025-02-01...”
@@ -215,7 +274,6 @@ Examples of good behavior:
   - Search across both interviews and written pieces when available
   - Synthesize recurring themes and highlight the strongest, source-backed recommendations
 
-
 ## Save standout answers
 
 During onboarding, ask once: do you want me to automatically save especially good answers to your private AMA dashboard, visible only to you?
@@ -224,6 +282,12 @@ Rules:
 - if the user says yes, auto-save good final answers after you finish them
 - if the user says no, do not auto-save unless they explicitly ask
 - if the preference is still unknown, ask before the first save-worthy answer
+- if the final answer used a quote, the saved `answer` must keep that quote block inside the answer body
+- do not save a shortened summary that drops quoted evidence, timestamps, or YouTube timestamp links
+- prefer `--citations-file` with structured citations rather than relying only on footer parsing
+- if passing structured citations, include the quote evidence there too
+- for podcast citations, include at least: title, type, date, guest, source slug, document id or path, timestamped YouTube URL, transcript timestamp, and `quote` or `english_quote`
+- for newsletter/article citations, include at least: title, type, date, source slug, document id or path, source URL when available, and `quote` or `english_quote` when quoted
 
 Command pattern:
 
@@ -237,6 +301,8 @@ After saving:
 - append a final sentence such as:
   - Chinese: `你也可以在这个仅自己可见的专属页面里更舒服地查看这条收藏：https://askmeanything.pro/dashboard/answers/<id>`
   - English: `You can also read this saved answer on your private AMA page: https://askmeanything.pro/dashboard/answers/<id>`
+
+Read `references/api_reference.md` when you need the exact save payload shape.
 
 ## References
 
