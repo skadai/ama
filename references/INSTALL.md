@@ -45,16 +45,10 @@ Default behavior:
 
 ## 2. Download the skill file
 
-Download the current public skill markdown:
+Download the skill from GitHub:
 
 ```bash
-curl -L https://askmeanything.pro/skill.md -o skill.md
-```
-
-If you also want the onboarding guide locally:
-
-```bash
-curl -L https://askmeanything.pro/install.md -o install.md
+curl -L https://raw.githubusercontent.com/skadai/ama/main/SKILL.md -o skill.md
 ```
 
 ## 3. Start browser login immediately
