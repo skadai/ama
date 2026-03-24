@@ -49,7 +49,7 @@ Rules:
 
 **Citations section at end:**
 
-After the answer, include a "Citations" section listing all sources with YouTube links and timestamps for podcasts:
+After the answer, include a "Citations" section listing all sources:
 
 ```
 Citations
@@ -57,6 +57,30 @@ Citations
 • [source/doc_id] Title (podcast, YYYY-MM-DD) — Guest Name
   YouTube: https://youtube.com/watch?v=xxx&t=154s
 • [source/doc_id] Title (newsletter, YYYY-MM-DD) — Author Name
+```
+
+**YouTube link rules:**
+- Only include YouTube link if the document metadata contains a valid `youtube_url`
+- Check the original document's frontmatter for `youtube_url` field
+- If no `youtube_url` exists, omit the YouTube line entirely
+- Never fabricate or guess YouTube URLs
+
+**Examples:**
+
+Podcast with YouTube:
+```
+• [lenny/abc123] Episode Title (podcast, 2024-01-15) — Guest Name
+  YouTube: https://youtube.com/watch?v=xxx&t=154s
+```
+
+Podcast without YouTube:
+```
+• [lenny/abc123] Episode Title (podcast, 2024-01-15) — Guest Name
+```
+
+Newsletter:
+```
+• [newsletter/xyz789] Article Title (newsletter, 2024-01-15) — Author Name
 ```
 
 ## Commands
