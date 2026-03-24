@@ -43,12 +43,36 @@ Default behavior:
 - without `--version`, the binary version is `dev`
 - default API base URL is `https://askmeanything.pro`
 
-## 2. Download the skill file
+## 2. Download the skill
 
-Download the skill from GitHub:
+### Method 1: Git clone (recommended)
 
 ```bash
-curl -L https://raw.githubusercontent.com/skadai/ama/main/SKILL.md -o skill.md
+# For Claude Code
+git clone https://github.com/skadai/ama.git ~/.claude/skills/ama
+
+# For other agents
+git clone https://github.com/skadai/ama.git ~/.agents/skills/ama
+```
+
+**Updating the skill**:
+```bash
+cd ~/.claude/skills/ama  # or ~/.agents/skills/ama
+git pull
+```
+
+### Method 2: Download ZIP
+
+```bash
+# For Claude Code
+curl -L https://github.com/skadai/ama/archive/refs/heads/main.zip -o /tmp/ama.zip
+unzip /tmp/ama.zip -d ~/.claude/skills/
+mv ~/.claude/skills/ama-main ~/.claude/skills/ama
+
+# For other agents
+curl -L https://github.com/skadai/ama/archive/refs/heads/main.zip -o /tmp/ama.zip
+unzip /tmp/ama.zip -d ~/.agents/skills/
+mv ~/.agents/skills/ama-main ~/.agents/skills/ama
 ```
 
 ## 3. Start browser login immediately
