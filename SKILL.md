@@ -14,7 +14,7 @@ Read `references/INSTALL.md`, install `amacli`, run `amacli auth login`, ask if 
 ## Answering
 
 1. Check language: `amacli language show`
-2. Search all sources: `amacli search --query "..." --top-k 15`
+2. Search all sources: `amacli search --query "..." --top-k 5`
 3. Read originals: `amacli document <doc_id>`
 4. Answer conclusion-first with inline citations
 5. Save if good: `cat answer.md | amacli save-answer --question "..."`
@@ -33,7 +33,6 @@ Inline citations are mandatory. Use these exact formats:
 **Podcast:**
 ```
 According to the guest [podcast|Episode Title|2:34], "original English quote"
-YouTube: https://youtube.com/watch?v=xxx&t=154s
 ```
 
 **Newsletter/Article:**
@@ -45,13 +44,24 @@ Rules:
 - Always include original English quotes when citing
 - When quoting, use the original document's language (likely English)
 - Every citation must use standard format for parsing
-- Podcast citations must include YouTube timestamp link
 - Format: `[type|title|timestamp]` for podcasts, `[type|title]` for text
 - Extract quotes from original markdown before writing answer
 
+**Citations section at end:**
+
+After the answer, include a "Citations" section listing all sources with YouTube links and timestamps for podcasts:
+
+```
+Citations
+
+• [source/doc_id] Title (podcast, YYYY-MM-DD) — Guest Name
+  YouTube: https://youtube.com/watch?v=xxx&t=154s
+• [source/doc_id] Title (newsletter, YYYY-MM-DD) — Author Name
+```
+
 ## Commands
 
-- `amacli search --query "..." --top-k 15` — search all sources
+- `amacli search --query "..." --top-k 5` — search all sources
 - `amacli document <doc_id>` — read original markdown
 - `cat answer.md | amacli save-answer --question "..."` — save answer
 
