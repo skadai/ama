@@ -1,0 +1,29 @@
+name: Build Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ama-website
+        uses: actions/checkout@v4
+        with:
+          repository: skadai/ama-website
+          token: ${{ secrets.PAT_AMA_WEBSITE }}
+          path: ama-website
+
+      - name: Build binaries
+        run: |
+          cd ama-website/amacli
+          chmod +x build.sh
+          ./build.sh --all --version ${{ github.event.release.tag_name }}
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ama-website/amacli/dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
