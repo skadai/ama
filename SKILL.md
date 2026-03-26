@@ -20,9 +20,10 @@ Read `references/INSTALL.md`, install `amacli`, run `amacli auth login`, ask if 
 5. Read originals for those selected sources: `amacli document <doc_id>`
 6. **Extract evidence BEFORE writing the answer** (this is not optional):
    - For each source you will cite, pull the original English quote now
-   - For podcasts: exact transcript timestamp + quote
-   - If document metadata contains `youtube_url`: build the `t=` jump link now
-   - Store these extractions — they become both inline citations AND the final Citations section
+   - Assign each piece of evidence a sequential number: `[1]`, `[2]`, `[3]`...
+   - Record the UUID for each citation (from search results)
+   - For podcasts: also record the exact transcript timestamp
+   - Store these extractions — numbers become inline refs, `doc_id` + timestamp become the Citations section
 7. Write the answer conclusion-first with inline citations
 8. **Append the Citations section** — this is the last part of every answer, no exceptions
 9. Self-check: re-read your response and verify the Citations section exists and is complete
@@ -37,7 +38,7 @@ Read `references/INSTALL.md`, install `amacli`, run `amacli auth login`, ask if 
 - An answer without Citations is an incomplete answer — treat it as a bug
 
 **Hard rule for podcasts:**
-Do not stop at source-level attribution. A podcast citation is not complete unless it includes the original English quote and a timestamp. If `youtube_url` exists in metadata, include the timestamped YouTube link in both the final answer and the saved answer. If no `youtube_url` exists, still include the timestamp and explicitly omit the link rather than inventing one.
+Do not stop at source-level attribution. A podcast citation is not complete unless it includes the original English quote (in the answer body) and a timestamp (in the Citations line). Extract the exact transcript timestamp during evidence extraction.
 
 **Hard rule for search breadth:**
 Do not prematurely narrow to one source such as Lenny unless the user explicitly asks for that source only. Default behavior is global search across all accessible sources with `top-k 15`, then shortlist the 5 most useful results after reading summaries. Podcast sources should be weighted heavily when the question is about interviews, spoken advice, founder reasoning, or original quotes.
@@ -50,72 +51,37 @@ Answer like someone who's actually consumed the content — not a neutral summar
 
 ## Citation format
 
-Inline citations are mandatory. Use these exact formats:
+During evidence extraction (step 6), assign each piece of evidence a sequential number `[1]`, `[2]`, etc. Record the document UUID (returned by `amacli search`) and, for podcast/video sources, the start timestamp.
 
-**Podcast:**
-```
-According to the guest [podcast|Episode Title|2:34], "original English quote"
-```
+**Inline citations** use numbered references only:
 
-**Newsletter/Article:**
 ```
-The author argues [newsletter|Article Title] that "original English quote"
+The best founders obsess over retention before growth [1]. This echoes the idea that "your product is your growth strategy" [2].
 ```
 
 Rules:
-- Always include original English quotes when citing
-- When quoting, use the original document's language (likely English)
-- Every citation must use standard format for parsing
-- Format: `[type|title|timestamp]` for podcasts, `[type|title]` for text
+- Always include original English quotes when citing — attribute with the number
+- One number per distinct quote or claim. Reuse the same number if citing the same passage again.
 - Extract quotes from original markdown before writing answer
 - For podcasts, citation quality is judged at the quote level, not just the episode level
-- For podcasts, include timestamp inline every time you quote
-- If document metadata contains `youtube_url`, convert the quote timestamp into a `t=` jump link and include it
-- Never call `save-answer` with a podcast answer that dropped quote timestamps or YouTube jump links that were available during extraction
 
 ## Citations section (MANDATORY — every answer must end with this)
 
 The Citations section is NOT optional. It is the final section of every answer. An answer that ends without it is broken.
 
-Structure:
+**Format:** one line per citation — a clickable link, with optional timestamp for podcast/video.
 
 ```
 Citations
-
-• [podcast|Episode Title|2:34]
-  Quote: "original English quote"
-  YouTube: https://youtube.com/watch?v=xxx&t=154s
-
-• [podcast|Episode Title|15:20]
-  Quote: "another original English quote"
-
-• [newsletter|Article Title]
-  Quote: "original English quote"
+[1] https://askmeanything.pro/articles/550e8400-e29b-41d4-a716-446655440000?t=154
+[2] https://askmeanything.pro/articles/7c9e6679-7425-40de-944b-e07fc1f90ae7
+[3] https://askmeanything.pro/articles/f47ac10b-58cc-4372-a567-0e02b2c3d479?t=920
 ```
 
-**YouTube link rules:**
-- Only include YouTube link if the document metadata contains a valid `youtube_url`
-- Check the original document's frontmatter for `youtube_url` field
-- If no `youtube_url` exists, omit the YouTube line entirely
-- Never fabricate or guess YouTube URLs
-
-**Examples:**
-
-Podcast with YouTube:
-```
-• [lenny/abc123] Episode Title (podcast, 2024-01-15) — Guest Name
-  YouTube: https://youtube.com/watch?v=xxx&t=154s
-```
-
-Podcast without YouTube:
-```
-• [lenny/abc123] Episode Title (podcast, 2024-01-15) — Guest Name
-```
-
-Newsletter:
-```
-• [newsletter/xyz789] Article Title (newsletter, 2024-01-15) — Author Name
-```
+- UUID is the document identifier returned by `amacli search`
+- For podcasts/videos, append `?t=<seconds>` to jump to the quoted passage
+- Omit `?t=` for newsletters and articles
+- Do NOT include titles, YouTube links, full quotes, or other metadata — the platform resolves these from the UUID
 
 ## Pre-save checklist
 
@@ -127,10 +93,9 @@ Before calling `save-answer`, verify every item. If any answer is "no", fix it f
 4. For each podcast claim, did I read the original transcript rather than only the search summary?
 5. Did I pull at least one original English quote for each strong podcast claim?
 6. Did I capture the exact transcript timestamp for each quoted passage?
-7. Did I check whether document metadata includes `youtube_url`?
-8. If `youtube_url` exists, did I add a `t=` jump link everywhere that quote appears?
-9. **Does my answer end with a complete Citations section (Evidence + Sources)?**
-10. Does the saved answer preserve quotes, timestamps, and links — not a citation-light summary?
+7. Are inline citations numbered `[1]`, `[2]`, etc. — not the old `[type|title]` format?
+8. **Does my answer end with a compact Citations section (`[n] https://askmeanything.pro/articles/<uuid>`)?**
+9. Does the saved answer preserve quotes in the body and numbered references — not a citation-light summary?
 
 If any answer is "no", the workflow is incomplete. Do not call `save-answer`.
 
